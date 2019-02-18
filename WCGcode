@@ -1,0 +1,115 @@
+import operator
+import os
+
+# Basic path for directory to search in
+path = 'C:\\Users\\theem\\Documents\\Python\\Lyrics\\'
+
+# Dictionaries, a list of filler words to be sorted out, and a variable
+allWords = {}
+bumWords = {}
+topFifty = {}
+filler = ['the', 'and', 'to', 'it', 'a', 'in', 'on', 'that', 'this', 'for',
+          'of', 'so', 'can', 'with', 'is', 'its', 'but', 'do', 'are', 'be',
+          'too', 'got', 'get', 'at', 'by', 'cause', 'all', 'we', 'im', 'like',
+          'when', 'what', 'youre', 'back', 'its', 'wanna', 'gonna', 'or', 'oh',
+          'has', 'ive', 'our', 'hes', 'put', 'weve', 'you', 'i', 'me',
+          'from', 'there', 'have', 'if', 'into', 'as', 'am', 'ill', 'was', 'let',
+          'been', 'keep', 'youve', 'who', 'theres', 'should', 'an', 'were',
+          'youre', 'my', 'they', 'off', 'out', 'up', 'your', 'one', '']
+mn = 1
+mx = 3000
+
+# Split the lyrics into individual words
+def splitLyrics(words):
+    for line in words:
+        for word in line.split(' '):
+            iw = word.lower()
+            skips = ['.',',',';',':','','"',"'",'!','?', '(', ')', '[', ']',
+                     '-', '\n', '\r']
+            for ch in skips:
+                iw = iw.replace(ch, '')
+            adder(iw, allWords, bumWords)
+
+# Keep score of words used. Should be only one use per song
+def adder(potentialWord, dictionary, bum):
+    if potentialWord not in dictionary:
+        dictionary[potentialWord] = 1
+        bum[potentialWord] = 1
+    else:
+        if potentialWord not in bum:
+            dictionary[potentialWord] +=1
+            bum[potentialWord] = 1
+        else:
+            bum[potentialWord] += 1
+
+# Get the top words and # of uses
+def getTop(dct, top, span):
+    tier = 1
+    for k, v in dct:
+        if k not in filler:
+            if tier <= span:
+                top[k] = v
+            tier += 1
+
+# Print top words and number of uses
+def printNicer(dct1):
+    tier1 = 1
+    for a, b in dct1.items():
+        print(str(tier1) + "." + "  " + "'{}\' has been used {} times".format(a, b))
+        tier1 += 1
+
+# Open each file in the folder and send them to the other functions,
+# then clear bumWords and close the file
+def listFiles(p):
+    for filename in os.listdir(p):
+        print(filename, "is being processed")
+        cur_file = open(p + '%s' % filename, 'r')
+        splitLyrics(cur_file)
+        bumWords.clear()
+        cur_file.close()
+
+# Ask for name of folder to generate WC
+def requestFolder(pa):
+    b = True
+    print('Welcome to the Word Cloud Generator.')
+    print('Which folder do you want to make a Word Cloud from?')
+    # Keep asking until valid folder name is given
+    while b == True:
+        w = str(input('Type folder name here: '))
+        po = pa
+        po = '%s%s' % (po, w)
+        # If folder exists, return path
+        if os.path.isdir(po) == True:
+            print('Excellent, we have that!\n')
+            input('Please click any button.\n')
+            return '%s' % po + '\\'
+            b = False
+        else:
+            print('Directory not found. Try again, please.\n')
+
+# Ask for number of top words
+def requestLimit():
+    c = True
+    print('How many top words do you want?')
+    while c == True:
+        d = int(input('Please type in a positive integer. (Max 500)\n'))
+        if d >= mn and d <= mx:
+            print('Excellent, we can do that!\n')
+            input('Please click any button.\n')
+            return d
+        else:
+            print('That is not a positive integer below 500.\n')
+
+path = requestFolder(path)
+ran = requestLimit()
+
+listFiles(path)
+
+sorted_allWords = sorted(allWords.items(), key=operator.itemgetter(1), reverse=True)
+
+getTop(sorted_allWords, topFifty, ran)
+
+printNicer(topFifty)
+print("This artist has used " + str(len(allWords)) + " unique words.")
+
+input('Press any key to exit.')
